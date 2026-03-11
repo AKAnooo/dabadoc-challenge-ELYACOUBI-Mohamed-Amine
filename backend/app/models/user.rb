@@ -9,4 +9,7 @@ class User
   field :password_digest, type: String
   field :latitude, type: Float
   field :longitude, type: Float
+
+  has_many :questions, dependent: :destroy
+  has_many :likes, dependent: :destroy
 end
