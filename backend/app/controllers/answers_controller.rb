@@ -9,7 +9,8 @@ class AnswersController < ApplicationController
     @answer.user = current_user
 
     if @question.save # Sauvegarder la question sauvegarde la réponse encastrée !
-      render json: @answer, status: :created
+      # On renvoie la réponse avec les infos de l'utilisateur pour le front
+      render json: @answer.as_json(include: :user), status: :created
     else
       render json: { errors: @answer.errors.full_messages }, status: :unprocessable_entity
     end

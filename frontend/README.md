@@ -1,59 +1,68 @@
-# Frontend
+# DabaDoc Challenge - Frontend (Angular)
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.2.
+Ce projet Angular constitue l'interface utilisateur du challenge DabaDoc. Il s'agit d'une application Single Page Application (SPA) développée avec **Angular 19** et **Bootstrap 5**.
 
-## Development server
+## Prérequis
 
-To start a local development server, run:
+- **Node.js** (v18+ recommandé)
+- **NPM** (v9+ recommandé)
+- **Angular CLI** (v19)
 
-```bash
-ng serve
-```
+## Installation
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+1. Assurez-vous d'être dans le dossier `frontend` du projet :
+   ```bash
+   cd frontend
+   ```
 
-## Code scaffolding
+2. Installez les dépendances npm :
+   ```bash
+   npm install
+   ```
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Configuration
 
-```bash
-ng generate component component-name
-```
+L'application est configurée pour communiquer par défaut avec l'API backend sur `http://localhost:3000`.
+Si votre backend tourne sur un autre port ou un autre domaine, vous pouvez modifier l'URL de base dans les services Angular (`src/app/services/auth.ts` et `src/app/services/question.ts`).
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Démarrage du serveur de développement
 
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+Pour lancer l'application en mode développement :
 
 ```bash
-ng test
+npm start
 ```
+*Ou via Angular CLI directement : `ng serve`*
 
-## Running end-to-end tests
+L'application sera accessible dans votre navigateur à l'adresse logique locale : **[http://localhost:4200/](http://localhost:4200/)**.
+L'application se rechargera automatiquement si vous modifiez un fichier source.
 
-For end-to-end (e2e) testing, run:
+## Fonctionnalités principales
 
-```bash
-ng e2e
-```
+L'interface Angular consomme l'API Rails et offre les fonctionnalités suivantes :
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+1.  **Authentification :**
+    *   Inscription (`/signup`) et Connexion (`/login`) via JWT.
+    *   Les jetons JWT sont stockés dans le `localStorage` et un Intercepteur Angular (`auth.interceptor.ts`) se charge de les injecter automatiquement dans les en-têtes `Authorization` de toutes les requêtes HTTP sortantes.
 
-## Additional Resources
+2.  **Gestion des Questions :**
+    *   Affichage d'un flux de questions.
+    *   **Carte Interactive (Leaflet) :** Lors de la création d'une question, l'utilisateur peut cliquer ou glisser un marqueur sur une carte pour définir précisément l'emplacement géographique de sa question, contournant ainsi les limitations de précision ou les blocages de l'API de géolocalisation native des navigateurs.
+    *   **Mini-cartes :** Chaque question listée est accompagnée d'une mini-carte statique illustrant sa localisation.
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+3.  **Filtres et Tri :**
+    *   **Tri intelligent :** L'utilisateur peut choisir via un menu déroulant de trier les questions soit par **Distance** (les plus proches de lui en premier grâce aux coordonnées GPS du navigateur), soit par **Récence** (les plus récentes en premier).
+    *   Les listes et les marqueurs sur la grande carte interactive se mettent à jour automatiquement à chaque changement de filtre (Architecture réactive basée sur les nouveaux `Signals` d'Angular).
+
+4.  **Favoris :**
+    *   Système de "J'aime" sur les questions.
+    *   Onglet dédié "Mes Favoris" permettant de filtrer instantanément l'affichage pour ne montrer que les questions likées par l'utilisateur connecté en appelant la route spécifique `/questions/favorites`.
+
+5.  **Réponses :**
+    *   Lecture et ajout de réponses à toute question existante, affichées sous forme de fil de discussion.
+
+## Choix Techniques
+
+*   **Angular Signals :** Le projet tire parti de la réactivité moderne d'Angular (Signals, `effect()`) pour gérer l'état local (comme le tri, l'onglet actif et le chargement conditionnel des données).
+*   **Leaflet :** Utilisé pour l'affichage de toutes les cartes interactives (carte principale, sélection de point, mini-cartes) en raison de sa légèreté et de sa simplicité d'intégration, sans dépendance à une clé API tierce (contrairement à Google Maps).
+*   **Bootstrap 5 :** Choisi pour prototyper rapidement une interface claire, "mobile-first" et esthétiquement propre via des classes utilitaires (pas de SCSS personnalisé lourd).

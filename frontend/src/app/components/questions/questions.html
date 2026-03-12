@@ -27,60 +27,137 @@
       <textarea class="form-control" placeholder="Décrivez votre question en détail..." 
                 [ngModel]="newQuestion().body" (ngModelChange)="updateNewQuestion('body', $event)" rows="3"></textarea>
     </div>
-    <div class="d-flex gap-2">
+    
+    <!-- Carte de sélection de localisation -->
+    <div class="mb-3">
+      <label class="form-label small fw-semibold text-muted">📍 Déplacez le marqueur pour préciser l'emplacement :</label>
+      <div class="rounded overflow-hidden border">
+        <div id="picker-map" style="height: 200px; width: 100%;"></div>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-2">
       <button type="button" class="btn btn-dark" (click)="postQuestion()">📤 Publier</button>
       <button type="button" class="btn btn-outline-secondary" (click)="showForm.set(false)">Annuler</button>
     </div>
   </div>
 
+  <!-- Onglets et Tri -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+    <ul class="nav nav-tabs border-bottom-0 mb-3 mb-md-0">
+      <li class="nav-item">
+        <button class="nav-link border-0 border-bottom border-2 fw-semibold px-4" 
+                [class.active]="currentTab() === 'all'"
+                [class.text-dark]="currentTab() === 'all'"
+                [class.border-dark]="currentTab() === 'all'"
+                [class.text-muted]="currentTab() !== 'all'"
+                [class.border-transparent]="currentTab() !== 'all'"
+                (click)="currentTab.set('all')">
+          🌍 Toutes les questions
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link border-0 border-bottom border-2 fw-semibold px-4" 
+                [class.active]="currentTab() === 'favorites'"
+                [class.text-dark]="currentTab() === 'favorites'"
+                [class.border-dark]="currentTab() === 'favorites'"
+                [class.text-muted]="currentTab() !== 'favorites'"
+                [class.border-transparent]="currentTab() !== 'favorites'"
+                (click)="currentTab.set('favorites')">
+          ⭐ Mes Favoris
+        </button>
+      </li>
+    </ul>
+
+    <!-- Menu déroulant pour le tri (uniquement visible sur l'onglet 'all') -->
+    <div *ngIf="currentTab() === 'all'">
+      <select class="form-select form-select-sm shadow-sm border-0 bg-white fw-semibold text-secondary" style="width: auto;"
+              [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event)">
+        <option value="distance">📍 Plus proches en 1er</option>
+        <option value="recent">⏱️ Plus récentes en 1er</option>
+      </select>
+    </div>
+  </div>
+
   <!-- Liste des questions -->
-  <div *ngFor="let question of questions()" class="card mb-3 border-0 shadow-sm rounded-3">
-    <div class="card-body p-4">
-      <!-- En-tête de la question -->
-      <div class="d-flex justify-content-between align-items-start mb-2">
-        <div>
-          <h5 class="card-title mb-1 fw-semibold">{{ question.title }}</h5>
-          <p class="card-text text-secondary mb-2">{{ question.body }}</p>
-          <small class="text-muted">
-            👤 {{ question.user?.email || 'Anonyme' }} &nbsp;·&nbsp;
-            🕐 {{ question.created_at | date:'d MMM y, HH:mm' }}
-          </small>
+  <div *ngFor="let question of questions()" class="card mb-3 border-0 shadow-sm rounded-3 overflow-hidden">
+    <div class="d-flex flex-column flex-md-row">
+      
+      <!-- Mini carte pour chaque question (affichée uniquement sur md et + large) -->
+      <div class="position-relative d-none d-md-block" style="width: 150px; min-width: 150px; background: #eee;">
+        <div [id]="'map-' + question._id" style="width: 100%; height: 100%; position: absolute; inset: 0;"></div>
+      </div>
+
+      <div class="card-body p-4 flex-grow-1">
+        <!-- En-tête de la question -->
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div class="flex-grow-1 me-3">
+            <h5 class="card-title mb-1 fw-semibold text-break">
+              {{ question.title }}
+            </h5>
+            <div class="text-muted small">
+              <!-- Avatar placeholder -->
+              <span class="d-inline-flex align-items-center justify-content-center bg-secondary text-white rounded-circle me-1" style="width: 20px; height: 20px; font-size: 10px;">
+                👤
+              </span>
+              {{ question.user?.email || 'Anonyme' }} <span class="mx-1">&middot;</span> 
+              <i class="bi bi-clock"></i> {{ question.created_at | date:'dd MMM yyyy, HH:mm' }}
+            </div>
+          </div>
+          
+          <!-- Bouton supprimer si = propriétaire (déplacé à droite pour plus de propreté) -->
+          <button *ngIf="isOwner(question)" 
+                  type="button" 
+                  class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 shadow-sm" 
+                  title="Supprimer la question"
+                  (click)="deleteQuestion(question._id)">
+            <!-- SVG Trash icon from Bootstrap Icons (or similar generic path) -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16">
+              <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5ZM11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H2.506a.58.58 0 0 0-.01 0H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1h-.995a.59.59 0 0 0-.01 0H11Zm1.814 1H3.186l-.803 10.04a1 1 0 0 0 .997 1.08h6.242a1 1 0 0 0 .997-1.08l-.803-10.04ZM5.5 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5Zm5 0a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5Z"/>
+            </svg>
+            <span class="d-none d-sm-inline">Supprimer</span>
+          </button>
         </div>
-      </div>
 
-      <!-- Bouton favori avec compteur -->
-      <div class="d-flex align-items-center gap-2 mt-3">
-        <button type="button"
-          class="btn btn-sm rounded-pill px-3"
-          [class.btn-warning]="question.liked"
-          [class.btn-outline-warning]="!question.liked"
-          (click)="toggleLike(question)">
-          ⭐ {{ question.liked ? 'Favori' : 'Ajouter aux favoris' }}
-        </button>
-        <span class="text-muted small" *ngIf="question.likes?.length > 0">
-          {{ question.likes.length }} favori{{ question.likes.length > 1 ? 's' : '' }}
-        </span>
-      </div>
+        <!-- Corps de la question restaurée -->
+        <p class="card-text text-secondary mb-3 fs-5">{{ question.body }}</p>
 
-      <!-- Réponses -->
-      <div *ngIf="question.answers?.length > 0" class="mt-3 pt-3 border-top">
-        <p class="small fw-semibold text-muted mb-2">{{ question.answers.length }} réponse{{ question.answers.length > 1 ? 's' : '' }}</p>
-        <div *ngFor="let answer of question.answers" class="mb-2 p-2 rounded bg-light">
-          <span class="fw-semibold small text-dark">{{ answer.user?.email || 'Anonyme' }}</span>
-          <span class="text-muted small"> · {{ answer.created_at | date:'d MMM, HH:mm' }}</span>
-          <p class="mb-0 mt-1">{{ answer.body }}</p>
+        <!-- Bouton favori avec compteur -->
+        <div class="d-flex align-items-center gap-2 mb-3 pb-3 border-bottom border-light">
+          <button type="button" 
+                  class="btn btn-sm d-flex align-items-center gap-2" 
+                  [ngClass]="question.liked ? 'btn-warning text-dark fw-bold' : 'btn-outline-warning text-dark'"
+                  (click)="toggleLike(question)">
+            <span>⭐</span> {{ question.liked ? 'Favori' : 'Ajouter aux favoris' }}
+          </button>
+          
+          <span class="small text-muted fw-medium" *ngIf="question.likes?.length">
+            {{ question.likes.length }} favori{{ question.likes.length > 1 ? 's' : '' }}
+          </span>
         </div>
-      </div>
 
-      <!-- Formulaire de réponse -->
-      <div class="mt-3 d-flex gap-2">
-        <input class="form-control form-control-sm rounded-pill"
-               placeholder="Votre réponse..."
-               [ngModel]="answerBody()[question._id] || ''" 
-               (ngModelChange)="updateAnswerBody(question._id, $event)">
-        <button type="button" class="btn btn-sm btn-dark rounded-pill px-3" (click)="postAnswer(question._id)">
-          Répondre
-        </button>
+        <!-- Section des réponses -->
+        <div class="mt-2">
+          <h6 class="text-muted small fw-bold text-uppercase mb-3" *ngIf="question.answers?.length">
+            {{ question.answers.length }} réponse{{ question.answers.length > 1 ? 's' : '' }}
+          </h6>
+          
+          <div class="d-flex flex-column gap-2 mb-3">
+            <div *ngFor="let ans of question.answers" class="bg-light p-3 rounded-3 border-start border-3 border-primary">
+              <small class="text-primary fw-semibold mb-1 d-block">{{ ans.user?.email || 'Anonyme' }} · <span class="text-muted fw-normal">{{ ans.created_at | date:'dd MMM, HH:mm' }}</span></small>
+              <span class="text-dark">{{ ans.body }}</span>
+            </div>
+          </div>
+          
+          <!-- Ajouter une réponse -->
+          <div class="d-flex gap-2 mt-3 p-3 bg-white border rounded-3 shadow-sm">
+            <input class="form-control form-control-sm border-0 bg-light" 
+                   placeholder="Écrivez votre réponse ici..." 
+                   [ngModel]="answerBody()[question._id] || ''" 
+                   (ngModelChange)="updateAnswerBody(question._id, $event)">
+            <button type="button" class="btn btn-sm btn-dark px-3 fw-semibold" (click)="postAnswer(question._id)">Répondre</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

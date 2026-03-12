@@ -1,7 +1,12 @@
 Rails.application.routes.draw do
   
   # Le grand bloc des questions et tout ce qui s'y rattache :
-  resources :questions, only: [:index, :create] do
+  resources :questions, only: [:index, :create, :destroy] do
+    # Les URL globales pour toutes les questions
+    collection do
+      get :favorites
+    end
+
     # Les URL pour Liker/Unliker une question précise
     member do
       post :like

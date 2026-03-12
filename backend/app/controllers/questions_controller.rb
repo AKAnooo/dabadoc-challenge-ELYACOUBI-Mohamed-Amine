@@ -1,22 +1,61 @@
 class QuestionsController < ApplicationController
-  # Fonctionnalité 5 : Lister les questions par distance
+  # Fonctionnalité 5 : Lister les questions par distance ou date
   def index
-    if params[:lat].present? && params[:lng].present?
+    # Si on ne demande pas explicitement "recent" ET qu'on a des coordonnées
+    if params[:sort] != 'recent' && params[:lat].present? && params[:lng].present?
       user_coords = [params[:lat].to_f, params[:lng].to_f]
       
-      # On charge toutes les questions et on les trie par distance en Ruby
+      # On charge toutes les questions et on les trie par distance en Ruby,
+      # puis par date de création (les plus récentes en premier pour une même distance)
       @questions = Question.all.to_a.sort_by do |q|
-        if q.latitude && q.longitude
-          Geocoder::Calculations.distance_between([q.latitude, q.longitude], user_coords)
-        else
-          Float::INFINITY # Les questions sans coordonnées vont à la fin
-        end
+        distance = if q.latitude && q.longitude
+                     Geocoder::Calculations.distance_between([q.latitude, q.longitude], user_coords)
+                   else
+                     Float::INFINITY # Les questions sans coordonnées vont à la fin
+                   end
+        
+        # Le -q.created_at.to_i permet de trier par les plus récentes d'abord en cas d'égalité
+        [distance, -q.created_at.to_i]
       end
     else
+      # Tri par date de création pure (le plus récent en haut)
       @questions = Question.all.order(created_at: :desc)
     end
 
-    render json: @questions, include: [:user, :answers, :likes]
+    # On construit une réponse JSON enrichie avec le statut "liked" pour le user actuel
+    questions_json = @questions.map do |q|
+      # On inclut le user de la question, ET le user de chaque réponse !
+      v = q.as_json(include: [
+        :user, 
+        :likes,
+        { answers: { include: :user } }
+      ])
+      v[:liked] = q.likes.exists?(user: current_user)
+      v
+    end
+
+    render json: questions_json
+  end
+
+  # Fonctionnalité 7 : Afficher les favoris
+  def favorites
+    # On récupère les IDs des questions que l'utilisateur a liké (attention au polymorphisme)
+    liked_question_ids = current_user.likes.where(likeable_type: 'Question').pluck(:likeable_id)
+    
+    # On trouve ces questions et on les trie par date de création (plus récentes en premier)
+    @favorite_questions = Question.in(id: liked_question_ids).order(created_at: :desc)
+    
+    questions_json = @favorite_questions.map do |q|
+      v = q.as_json(include: [
+        :user, 
+        :likes,
+        { answers: { include: :user } }
+      ])
+      v[:liked] = true # Forcément true puisqu'on est dans les favoris
+      v
+    end
+
+    render json: questions_json
   end
 
   # Fonctionnalité 3 : Poser une question
@@ -48,6 +87,18 @@ class QuestionsController < ApplicationController
     @like&.destroy
     
     render json: { message: 'Question retirée des favoris' }, status: :ok
+  end
+
+  # Nouvelle Fonctionnalité : Supprimer sa propre question
+  def destroy
+    @question = Question.find(params[:id])
+    
+    if @question.user == current_user
+      @question.destroy
+      render json: { message: 'Question supprimée avec succès' }, status: :ok
+    else
+      render json: { error: 'Non autorisé' }, status: :unauthorized
+    end
   end
 
   private

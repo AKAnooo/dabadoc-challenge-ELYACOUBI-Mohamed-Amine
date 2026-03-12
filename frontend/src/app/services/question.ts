@@ -10,13 +10,18 @@ export class QuestionService {
 
   constructor(private http: HttpClient) {}
 
-  // Récupérer les questions (triées par distance si lat/lng fournis)
-  getQuestions(lat?: number, lng?: number): Observable<any[]> {
-    let params = new HttpParams();
+  // Récupérer les questions (triées par distance ou date)
+  getQuestions(lat?: number, lng?: number, sort: 'distance' | 'recent' = 'distance'): Observable<any[]> {
+    let params = new HttpParams().set('sort', sort);
     if (lat && lng) {
       params = params.set('lat', lat.toString()).set('lng', lng.toString());
     }
     return this.http.get<any[]>(`${this.apiUrl}/questions`, { params });
+  }
+
+  // Récupérer uniquement les favoris de l'utilisateur
+  getFavorites(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/questions/favorites`);
   }
 
   // Poster une nouvelle question
@@ -37,5 +42,9 @@ export class QuestionService {
   // Unliker une question
   unlikeQuestion(questionId: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/questions/${questionId}/unlike`);
+  }
+
+  deleteQuestion(questionId: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/questions/${questionId}`);
   }
 }
