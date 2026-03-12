@@ -42,3 +42,5 @@ group :development, :test do
 end
 
 gem "mongoid", "~> 9.0"
+
+gem "jwt", "~> 3.1"

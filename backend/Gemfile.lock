@@ -117,6 +117,8 @@ GEM
     json-schema (6.2.0)
       addressable (~> 2.8)
       bigdecimal (>= 3.1, < 5)
+    jwt (3.1.2)
+      base64
     kamal (2.10.1)
       activesupport (>= 7.0)
       base64 (~> 0.2)
@@ -319,6 +321,7 @@ DEPENDENCIES
   brakeman
   bundler-audit
   debug
+  jwt (~> 3.1)
   kamal
   mongoid (~> 9.0)
   puma (>= 5.0)
