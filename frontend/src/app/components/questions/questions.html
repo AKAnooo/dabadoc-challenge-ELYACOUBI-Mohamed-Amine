@@ -1,0 +1,56 @@
+<nav class="navbar navbar-dark bg-primary px-3">
+  <span class="navbar-brand fw-bold">📍 DabaDoc Q&A</span>
+  <div class="d-flex align-items-center gap-3">
+    <span class="text-white">{{ currentUser?.email }}</span>
+    <button type="button" class="btn btn-outline-light btn-sm" (click)="showForm = !showForm">+ Poser une question</button>
+    <button type="button" class="btn btn-outline-light btn-sm" (click)="logout()">Déconnexion</button>
+  </div>
+</nav>
+
+<div class="container mt-4">
+
+  <!-- Formulaire de nouvelle question -->
+  <div *ngIf="showForm" class="card mb-4 p-3 shadow-sm">
+    <h5>Nouvelle question</h5>
+    <div class="mb-2">
+      <input class="form-control" placeholder="Titre" [(ngModel)]="newQuestion.title">
+    </div>
+    <div class="mb-2">
+      <textarea class="form-control" placeholder="Décrivez votre question..." [(ngModel)]="newQuestion.body" rows="3"></textarea>
+    </div>
+    <button type="button" class="btn btn-primary" (click)="postQuestion()">Publier</button>
+  </div>
+
+  <!-- Liste des questions -->
+  <div *ngFor="let question of questions" class="card mb-3 shadow-sm">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <h5 class="card-title">{{ question.title }}</h5>
+          <p class="card-text">{{ question.body }}</p>
+          <small class="text-muted">Par {{ question.user?.email }} · {{ question.created_at | date:'short' }}</small>
+        </div>
+        <button type="button" class="btn btn-sm" [class.btn-warning]="question.liked" [class.btn-outline-warning]="!question.liked" (click)="toggleLike(question)">
+          ⭐ {{ question.liked ? 'Favori' : 'Ajouter aux favoris' }}
+        </button>
+      </div>
+
+      <!-- Réponses -->
+      <div *ngIf="question.answers?.length > 0" class="mt-3 ps-3 border-start">
+        <div *ngFor="let answer of question.answers" class="mb-2">
+          <strong>{{ answer.user?.email }}</strong> — {{ answer.body }}
+        </div>
+      </div>
+
+      <!-- Formulaire de réponse -->
+      <div class="mt-3 d-flex gap-2">
+        <input class="form-control form-control-sm" placeholder="Votre réponse..." [(ngModel)]="answerBody[question._id]">
+        <button type="button" class="btn btn-sm btn-outline-primary" (click)="postAnswer(question._id)">Répondre</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="questions.length === 0" class="text-center text-muted mt-5">
+    <p>Aucune question dans votre zone pour l'instant. Soyez le premier !</p>
+  </div>
+</div>

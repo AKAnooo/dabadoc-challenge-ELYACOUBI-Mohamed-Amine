@@ -1,0 +1,29 @@
+<div class="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+  <div class="card shadow p-4" style="width: 400px;">
+    <h2 class="text-center mb-4">Inscription</h2>
+
+    <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+
+    <form (ngSubmit)="onSubmit()">
+      <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" id="email" class="form-control" [(ngModel)]="email" name="email" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="password" class="form-label">Mot de passe</label>
+        <input type="password" id="password" class="form-control" [(ngModel)]="password" name="password" required>
+      </div>
+
+      <p class="text-muted small">
+        📍 Votre position sera automatiquement détectée pour vous montrer les questions à proximité.
+      </p>
+
+      <button type="submit" class="btn btn-success w-100">S'inscrire</button>
+    </form>
+
+    <p class="text-center mt-3">
+      Déjà un compte ? <a routerLink="/login">Se connecter</a>
+    </p>
+  </div>
+</div>

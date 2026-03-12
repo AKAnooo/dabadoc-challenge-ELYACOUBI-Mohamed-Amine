@@ -1,12 +1,18 @@
 class QuestionsController < ApplicationController
   # Fonctionnalité 5 : Lister les questions par distance
   def index
-    # On imagine qu'Angular nous envoie la position actuelle du User dans l'URL (?lat=48.8&lng=2.3)
     if params[:lat].present? && params[:lng].present?
-      # La magie de Geocoder : ".near" trie de la plus proche à la plus lointaine !
-      @questions = Question.near([params[:lat], params[:lng]], 50, units: :km) # Rayon de 50km
+      user_coords = [params[:lat].to_f, params[:lng].to_f]
+      
+      # On charge toutes les questions et on les trie par distance en Ruby
+      @questions = Question.all.to_a.sort_by do |q|
+        if q.latitude && q.longitude
+          Geocoder::Calculations.distance_between([q.latitude, q.longitude], user_coords)
+        else
+          Float::INFINITY # Les questions sans coordonnées vont à la fin
+        end
+      end
     else
-      # Si pas de coordonnées, on renvoie toutes les questions, par date (plus récentes d'abord)
       @questions = Question.all.order(created_at: :desc)
     end
 
