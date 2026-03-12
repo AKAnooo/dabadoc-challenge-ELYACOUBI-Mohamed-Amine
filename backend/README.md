@@ -60,4 +60,9 @@ L'API sera accessible sur `http://localhost:3000`.
 | `DELETE` | `/questions/:id/unlike` | Retire une question des favoris | Oui |
 
 ---
+## Variables d'environnement
+
+Pour simplifier le setup du challenge, la clé secrète JWT est définie directement dans `ApplicationController`. Dans un contexte de production, elle serait gérée via une variable d'environnement dédiée (ex: `ENV['JWT_SECRET']`).
+
+---
 *Note: Le mode CORS n'a pas encore été configuré, il sera adapté selon le port de l'application Angular.*
